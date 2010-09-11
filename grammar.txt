@@ -1,0 +1,24 @@
+document ::= {document_element}
+document_element ::= header | paragraph | list | quote | verbatim
+
+header ::= ASTERISKS paragraph
+
+paragraph ::= paragraph_content paragraph_end_marker
+paragraph_content ::= {paragraph_element}
+paragraph_element ::= TEXT | tag
+paragraph_end_marker ::= (DOUBLE_NEW_LINE) | EOF
+
+tag ::= BACKSLASH ID LEFT_BRACKET tag_content RIGHT_BRACKET
+tag_content ::= paragraph_content | {document_element}
+
+list ::= ordered_list | unordered_list
+ordered_list ::= {ordered_list_item}
+unordered_list ::= {unordered_list_item}
+ordered_list_item ::= LIST_HASH {paragraph} paragraph_content
+unordered_list_item ::= LIST_HYPHEN {paragraph} paragraph_content
+
+quote ::= QUOTE_INDENT {document_element} QUOTE_DEDENT
+
+verbatim ::= VERBATIM_INDENT TEXT VERBATIM_DEDENT
+
+----
