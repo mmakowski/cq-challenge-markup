@@ -16,32 +16,37 @@ object MarkupSyntax {
 
 trait MarkupTokens extends Tokens {
   case object Backslash extends Token { def chars = "\\" }
-  case object DoubleNewLine extends Token { def chars = "\n\n" }
+  case object NewLine extends Token { def chars = "\n\n" }
+  case object OpeningBracket extends Token { def chars = "{" }
+  case object ClosingBracket extends Token { def chars = "}" }
+  // TODO: Whitespace
   case class Str(s: String) extends Token { def chars = s }
 }
 
 class Lexer extends Lexical with MarkupTokens {
   import scala.util.parsing.input.CharArrayReader.EofCh
 
-  def whitespace : Parser[Any] = rep('\t')
+  def whitespace : Parser[Any] = success()
 
   def token : Parser[Token] = (
-      '\\' ^^^ Backslash
-    | '\n'~'\n' ^^^ DoubleNewLine
+    '\\' ^^^ Backslash
+    | '\r'~'\n' ^^^ NewLine
+    | '\n'~'\r' ^^^ NewLine
+    | '\n' ^^^ NewLine
     | EofCh ^^^ EOF
-    | rep1(chrExcept(EofCh)) ^^ (charList => Str(charList mkString ""))
+    | rep1(chrExcept(EofCh, '\\', '\n', '\r')) ^^ (charList => Str(charList mkString ""))
   )
 }
 
 class Parser extends TokenParsers {
   type Tokens = MarkupTokens
   val lexical = new Lexer
-  import lexical.{Backslash, DoubleNewLine, Str}
+  import lexical.{Backslash, NewLine, Str}
   import MarkupSyntax._
 
   def document : Parser[Document] = rep(paragraph) ^^ 
 				    (elts => Document(elts))
-  def paragraph : Parser[DocumentElement] = rep1(paragraphElement) <~ DoubleNewLine ^^ 
+  def paragraph : Parser[DocumentElement] = rep1(paragraphElement) <~ NewLine ^^ 
 				   	    (elts => Paragraph(elts))
   def paragraphElement : Parser[ParagraphElement] = text
   def text : Parser[Text] = Str("dupa") ^^ (str => Text(str.asInstanceOf[Str].s))

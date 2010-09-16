@@ -13,17 +13,20 @@ class LexerSuite extends FunSuite with ShouldMatchers {
     tokenFrom ("\\") should equal (lexer.Backslash)
   }
 
-  test("double new line tokens are recognised") {
-    tokenFrom ("\n\n") should equal (lexer.DoubleNewLine)
+  test("lf is recognised as a new line token") {
+    tokenFrom ("\nasdf") should equal (lexer.NewLine)
   }
 
-  test("string is scanned until double new line") {
-    tokenFrom ("some sample text\n\nwith a new line") should equal (lexer.Str("some sample text"))
+  test("cr-lf is recognised as a new line token") {
+    tokenFrom ("\r\nasdf") should equal (lexer.NewLine)
   }
 
-  val textToScan = """
-* Header
-  
+  test("string is scanned until new line") {
+    tokenFrom ("some sample text\nwith a new line") should equal (lexer.Str("some sample text"))
+  }
+
+  val textToScan = """* Header
+
 paragraph 1,
       which consists of multiple
 lines.
@@ -32,14 +35,10 @@ paragraph 2 with \ a backslash
   """
 
   test("scan some string") {
+    //println(textToScan.replace("\n", "<lf>").replace("\r", "<cr>"))
     val scanner = new lexer.Scanner(textToScan)
-    def printTokens(scanner : lexer.Scanner) : Unit = 
-      if (!scanner.atEnd) {
-	println(">>>>")
-	println(scanner.first)
-	println("<<<<")
-	printTokens(scanner.rest)
-      }
-    printTokens(scanner)
+    def tokens(scanner : lexer.Scanner) : List[lexer.Token] = 
+      if (scanner.atEnd) List() else scanner.first :: tokens(scanner.rest)
+    println(tokens(scanner))
   }
 }
