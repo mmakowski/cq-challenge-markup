@@ -1,0 +1,13 @@
+;; This config was generated using ensime-config-gen. Feel free to customize its contents manually. 
+
+(
+
+:project-name "cq_challenge_markup"
+
+:server-root "c:/Program Files/ensime"
+
+:project-package "cq_challenge_markup"
+
+:use-sbt t
+
+)
