@@ -6,9 +6,9 @@ header ::= ASTERISKS paragraph
 paragraph ::= paragraph_content paragraph_end_marker
 paragraph_content ::= {paragraph_element}
 paragraph_element ::= TEXT | tag
-paragraph_end_marker ::= (DOUBLE_NEW_LINE) | EOF
+paragraph_end_marker ::= (DOUBLE_NEW_LINE) | EOF | NEW_LINE
 
-tag ::= BACKSLASH ID LEFT_BRACKET tag_content RIGHT_BRACKET
+tag ::= TAG_START tag_content TAG_END
 tag_content ::= paragraph_content | {document_element}
 
 list ::= ordered_list | unordered_list
@@ -29,10 +29,8 @@ ASTERISKS
 TEXT
 DOUBLE_NEW_LINE
 EOF
-BACKSLASH
-ID
-LEFT_BRACKET
-RIGHT_BRACKET
+TAG_START
+TAG_END
 LIST_HASH
 LIST_HYPHEN
 QUOTE_INDENT

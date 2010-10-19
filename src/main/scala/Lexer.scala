@@ -15,12 +15,11 @@ object MarkupSyntax {
 }
 
 trait MarkupTokens extends Tokens {
-  case object Backslash extends Token { def chars = "\\" }
+  case class TagStart(id: String) extends Token { def chars = "\\" + id + "{" }
   case object DoubleNewLine extends Token { def chars = "\\" }
   case class Asterisks(length: Int) extends Token { def chars = "*" * length }
-  case object OpeningBracket extends Token { def chars = "{" }
-  case object ClosingBracket extends Token { def chars = "}" }
-  // TODO: Whitespace
+  case object TagEnd extends Token { def chars = "}" }
+  case object ListHash extends Token { def chars = "  # " }
   case class Str(s: String) extends Token { def chars = s }
 }
 
@@ -30,17 +29,18 @@ class Lexer extends Lexical with MarkupTokens {
   def whitespace : Parser[Any] = success()
 
   def token : Parser[Token] = (
-    '\\' ^^^ Backslash
-    | asterisks
-    | '{' ^^^ OpeningBracket
-    | '}' ^^^ ClosingBracket
+    asterisks
+    | tagStart
+    | '}' ^^^ TagEnd
+    | ' '~' '~'#'~' ' ^^^ ListHash
     | doubleNewLine ^^^ DoubleNewLine
     | EofCh ^^^ EOF
-    | rep1(chrExcept(EofCh, '\\', '\n', '\r')) ^^ (charList => Str(charList mkString ""))
-    | newLine ^^^ Str("\n") // TODO: ideally this would be part of the preceding Str
+    | rep1(chrExcept(EofCh, '\\', '\n', '\r', '}')) ^^ (charList => Str(charList mkString ""))
+    | newLine ^^^ Str("\n")
   )
 
   def asterisks : Parser[Token] = rep1('*')<~' ' ^^ (astList => Asterisks(astList.length))
+  def tagStart : Parser[Token] = '\\'~>rep1(chrExcept('{'))<~'{' ^^ (charList => TagStart(charList mkString ""))
   def doubleNewLine = newLine~whitespaceIgnorableBeforeNewLine~newLine
   def newLine = '\r'~'\n' | '\n'~'\r' | '\n' | '\r'
   def whitespaceIgnorableBeforeNewLine = rep(elem(' ') | '\t')
@@ -49,7 +49,7 @@ class Lexer extends Lexical with MarkupTokens {
 class Parser extends TokenParsers {
   type Tokens = MarkupTokens
   val lexical = new Lexer
-  import lexical.{Backslash, Str}
+  import lexical.{TagStart, Str}
   import MarkupSyntax._
 
   def document : Parser[Document] = rep(paragraph) ^^ 
